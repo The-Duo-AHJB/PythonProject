@@ -69,4 +69,21 @@ def interface():
 		return False
 	else:
 		print("Invalid entry")
+
+def ChangePass(username):
+    print ("What do you want to change your password to?")
+    password = input()
+
+    query = ("update egccuser set password = %s where username = %s")
+    qdata = (password, username)
+    try: 
+    cursor.execute(query,qdata)
+    # get the number of rows updated
+    numrows = int(cursor.rowcount)
+    print(str(numrows) + " were updated")
+    # Make sure data is committed to the database
+    cnx.commit()
+    except mysql.connector.Error as err:
+    print("Update was not successful " + str(err))
+
 main()
