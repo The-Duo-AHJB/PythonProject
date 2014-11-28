@@ -1,6 +1,5 @@
 import mysql.connector
 
-
 def main():
 	running = True
 	login = True
@@ -9,9 +8,6 @@ def main():
 		password = input("Please enter your password\n")
 		login = interface()
 		print(login)
-
-
-
 
 def interface():
 	print("0 : Change my Password")
@@ -76,14 +72,12 @@ def ChangePass(username):
 
     query = ("update egccuser set password = %s where username = %s")
     qdata = (password, username)
-    try: 
-    cursor.execute(query,qdata)
-    # get the number of rows updated
-    numrows = int(cursor.rowcount)
-    print(str(numrows) + " were updated")
-    # Make sure data is committed to the database
-    cnx.commit()
+    try:
+            cursor.execute(query,qdata)
+            numrows = int(cursor.rowcount)
+            print(str(numrows) + " were updated")
+            cnx.commit()
     except mysql.connector.Error as err:
-    print("Update was not successful " + str(err))
+        print("Update was not successful " + str(err))
 
 main()
