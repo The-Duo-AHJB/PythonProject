@@ -6,11 +6,11 @@ def main():
 	login = True
 	global username #useful for using the username without reinput for command 0
 	while running== True:
-		username = raw_input("Please enter your username\n")
-		password = raw_input("Please enter your password\n")
-		database = raw_input("Please enter your schema\n")
-		host = 'COMPDBS300'
-		cnx = mysql.connector.connect(username, password, host, database)
+		username = input("Please enter your username\n")
+		pword = input("Please enter your password\n")
+		db = input("Please enter your schema\n")
+
+		cnx = mysql.connector.connect(user = username, password = pword, host = 'COMPDBS300', database = db)
 		cursor = cnx.cursor()
 		login = interface()
 		print(login)
