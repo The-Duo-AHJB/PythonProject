@@ -86,13 +86,20 @@ def loginAttempt(username, password, cursor, cnx):
 	query = ("SELECT UserID from egccuser where username = %s and password = %s")
 	qdata = (username, password)
 	cursor.execute(query, qdata)
+	print(cursor.UserID)
 	for(UserID) in cursor:
 		numrows += 1
 	if numrows == 1:
 		return True
 	else:
 		return False
-	
+
+def getID(username, cursor, cnx):
+	query = ("SELECT UserID from egccuser where username = %s")
+	cursor.execute(query,username)
+	for (UserID) in cursor:
+		return UserID
+		
 def changePass(username):
         print ("What do you want to change your password to?")
         password = raw_input() #using raw_input() instead of input() solved the issue of the name not being defined upon input of a string.
