@@ -4,9 +4,6 @@ import mysql.connector
 def main():
 	running = True
 	login = False
-	global username #useful for using the username without reinput for command 0
-	##Not sure how I feel about the above, do we really need globals or can we just keep passing, besides, the way this works if we want to relog we cant change this easily.
-
 	while running== True:
 		cnx = mysql.connector.connect(user = 'u249454', password = 'p249454', host = 'COMPDBS300', database = 'schema249454')
 		cursor = cnx.cursor()
@@ -15,12 +12,16 @@ def main():
 		login = loginAttempt(username, pword, cursor, cnx)
 		if login == True:
 			print("Login Successful")
-			while(login == true):
+			while(login == True):
 				login = interface(username, pword)
 		else:
-			print("Login Failed, would you like you like to try again? Y/N")
+			print("Login Failed, would you like you like to try again? enter E to exit.")
 			response = input()
-			if
+			if response.upper() == "E":
+				running = False
+				print("Have a nice day")
+			
+			
 
 def interface(username, pword):
 	print("0 : Change my Password")
