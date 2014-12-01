@@ -71,7 +71,7 @@ def interface(username, pword, cursor, cnx): #I added a pass cursor and cnx so t
 		viewNumBids(cursor)
 		return True
 	elif(choice == 8):
-		viewPopItem(cursor, cnx)  #Some Kinda error gives a rand num and then 2211 but the most pop item is 2214
+		viewPopItem(cursor, cnx)  #Gives the answer in tuple form.
 		return True
 	elif (choice == 9):
 		newItemAuction(userID, cursor, cnx)
@@ -89,7 +89,7 @@ def interface(username, pword, cursor, cnx): #I added a pass cursor and cnx so t
 		rateSeller(userID, cursor, cnx)
 		return True
 	elif(choice == 14):
-		closeAuction()
+		closeAuction(userID, cursor, cnx)
 		return True
 	elif(choice == 15):
 		viewTopSellers()
@@ -141,7 +141,7 @@ def viewItems(UserID, cursor):
                 print(str(ItemID) + "\t" + str(title) + "\t"+str(description)+"\t"+str(startingBid)+"\t"+str(highestBid)+"\t"+str(endDate)+"\t"+str(SellerID)+"\t"+str(status)+"\t"+str(category) +"\n")
 
 
-def viewPurchases(UserID, cursor): #It says UserID isn't defined and that it needs to be passed.  Obviously it's being passed.
+def viewPurchases(UserID, cursor): 
         query = ("SELECT title, description, price, category, dateSold, dateShipped from (select * from Purchase natural join item) BuyerInfo where BuyerID = %s")
         cursor.execute(query, (UserID,))
         for (title, description, price, category, dateSold, dateShipped) in cursor:
@@ -265,7 +265,22 @@ def rateSeller(userID, cursor, cnx): #I think this works.  It makes sense for it
                 cnx.commit()
                 print("Rating submitted successfully!")
         except mysql.connector.Error as err:
-                print("Rating was not successful " + str(err))        
+                print("Rating was not successful " + str(err))
+
+def closeAuction(userID, cursor, cnx):
+        print("What is the Item ID of the auction you want to close?")
+        ItemID = input()
+        query = ("insert into purchase values ((select buyerid from (select max(currentbid), buyerid from bid where itemid = %s group by itemid) FinalBidder), %s, (select highestbid from item where itemid = %s), date(sysdate()), null)")
+        qdata = (ItemID, ItemID, ItemID)
+        try:
+                cursor.execute(query, qdata)
+                cnx.commit()
+                query = ("update item set status = 'sold' where itemid = %s")
+                cursor.execute(query, (ItemID,))
+                cnx.commit()
+                print("You have successfully closed the auction.")
+        except mysql.connector.Error as err:
+                print("Closing the auction was unsuccessful " + str(err))
 
 	
 main()
