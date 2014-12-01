@@ -56,7 +56,7 @@ def interface(username, pword, cursor, cnx): #I added a pass cursor and cnx so t
 		viewItems(userID, cursor)
 		return True
 	elif(choice == 3):
-		viewPurchases(UserID, cursor) #Error global id userid not defined pass it
+		viewPurchases(userID, cursor) #Error global id userid not defined pass it
 		return True
 	elif(choice == 4):
 		searchWord(cursor, cnx)
