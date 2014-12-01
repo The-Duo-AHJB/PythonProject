@@ -166,11 +166,11 @@ def viewSellerRating(cursor, cnx):
                print(str(rating[0]))
 
 
-def viewPopItem(cursor, cnx): #Need to fix the SQL and possibly the output (but otherwise prints fine)
-        query = ("select max(item), itemid from (select count(itemid) as item, ItemID from bid group by itemid) max")
+def viewPopItem(cursor, cnx): #This needs to NOT print in tuple form.
+        query = ("select itemID from(select count(*) as nbids, itemID from Bid group by (itemID)) bidsperitem where nbids >= all(select count(itemid) as nbids from bid group by itemid)")
         cursor.execute(query)
-        for (item, itemid) in cursor:
-                print(str(item)+"\t"+str(itemid))
+        for (itemID) in cursor:
+                print(itemID)
 
 def shipItem(cursor, cnx): 
         print("What is the Item ID of the item you have shipped?")
