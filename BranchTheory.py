@@ -1,12 +1,13 @@
 import mysql.connector
 import datetime
+import time
 
 
 def main():
 	running = True
 	login = False
 	while running== True:
-		cnx = mysql.connector.connect(user = 'u459508', password = 'p459508', host = 'COMPDBS300', database = 'schema459508')
+		cnx = mysql.connector.connect(user = 'u249454', password = 'p249454', host = 'COMPDBS300', database = 'schema249454')
 		cursor = cnx.cursor()
 		username = input("Please enter your username\n")
 		pword = input("Please enter your password\n")
@@ -49,7 +50,7 @@ def interface(username, pword, cursor, cnx): #I added a pass cursor and cnx so t
 		changePass(username, cursor, cnx)
 		return True
 	elif(choice == 1):
-		viewMyBid()
+		viewMyBid(userID, cursor)
 		return True
 	elif(choice == 2):
 		viewItems(userID, cursor, cnx)
@@ -61,25 +62,25 @@ def interface(username, pword, cursor, cnx): #I added a pass cursor and cnx so t
 		searchWord(cursor, cnx)
 		return True
 	elif(choice == 5):
-		searchCata()
+		searchCata(cursor)
 		return True
 	elif(choice == 6):
 		viewSellerRating(cursor, cnx)
 		return True
 	elif(choice == 7):
-		viewNumBids()
+		viewNumBids(cursor)
 		return True
 	elif(choice == 8):
 		viewPopItem(cursor, cnx)
 		return True
 	elif (choice == 9):
-		newItemAuction()
+		newItemAuction(userID, cursor, cnx)
 		return True
 	elif(choice == 10):
 		shipItem(cursor, cnx)
 		return True
 	elif(choice == 11):
-		viewHighBid()
+		viewHighBid(cursor)
 		return True
 	elif(choice == 12):
 		placeBid()
@@ -184,4 +185,59 @@ def shipItem(cursor, cnx): #same problem
                 cnx.commit()
         except mysql.connector.Error as err:
                 print("Update was not successful " + str(err))
+
+
+
+def 	viewMyBid(UserID, cursor):
+		query = ("Select distinct ItemID, title, description, startingBid, highestBid, endDate, SellerID, status, category from item natural join(select itemID from bid where BuyerID = %s)as temp")
+		cursor.execute(query, (UserID,))
+		for (ItemID, title, description, startingBid, highestBid, endDate, SellerID, status, category) in cursor:
+			print(str(ItemID) + "\t" + str(title) + "\t"+str(description)+"\t"+str(startingBid)+"\t"+str(highestBid)+"\t"+str(endDate)+"\t"+str(SellerID)+"\t"+str(status)+"\t"+str(category) +"\n")
+
+def searchCata(cursor):
+	query = ("Select ItemID, title, description, startingBid, highestBid, endDate, SellerID, status, category from item where category = %s")
+	word = input("Enter the category you would like to search\n")
+	cursor.execute(query, (word,))
+	for (ItemID, title, description, startingBid, highestBid, endDate, SellerID, status, category) in cursor:
+		print(str(ItemID) + "\t" + str(title) + "\t"+str(description)+"\t"+str(startingBid)+"\t"+str(highestBid)+"\t"+str(endDate)+"\t"+str(SellerID)+"\t"+str(status)+"\t"+str(category) +"\n")
+	
+def viewNumBids(cursor):
+	query = ("select count(currentbid) itemNum from bid where itemid = %s group by itemid")
+	itemID = input("Enter the ID of the item of which you wish to know the current number of bids\n")
+	cursor.execute(query,(itemID,))
+	for itemNum in cursor:
+		print(str(itemNum[0]))
+
+def newItemAuction(userID, cursor, cnx):
+	query = ("Select max(ItemID) maxNum from item")
+	cursor.execute(query)
+	HighID = 0
+	for maxNum in cursor:
+		HighID = int(maxNum[0])
+	HighID += 1
+	query = ("insert into item(title, startingBid, endDate, category, SellerID, ItemID) values(%s, %s, %s, %s, %s, %s)")
+	title = input("What is the name of your item?\n")
+	sBid = input("What is the starting bid?\n")
+	eD = input("What is the end date? please enter in the form YYYYMMDD.\n")
+	now = time.strftime("%Y%m%d")
+	if int(eD) < int(now):
+		print("You can now have an end date before the current date")
+		return
+	cate = input("Enter the category for your item\n")
+	qdata = (title, sBid, eD, cate, userID, HighID)
+	cursor.execute(query, qdata)
+	cnx.commit()
+	print("Item listed successfully!")
+
+def viewHighBid(cursor):
+	query = ("select max(currentbid) num from bid where itemid = %s group by itemid")
+	itemID = input("Enter the id of the item for which you wish to know the highest current bid\n")
+	try:
+		cursor.execute(query, (itemID,))
+		for num in cursor:
+			print(num[0])
+	except:
+		print("Invalid item ID")
+		
+	
 main()
