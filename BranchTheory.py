@@ -7,7 +7,7 @@ def main():
 	running = True
 	login = False
 	while running== True:
-		cnx = mysql.connector.connect(user = 'u249454', password = 'p249454', host = 'COMPDBS300', database = 'schema249454')
+		cnx = mysql.connector.connect(user = 'u459508', password = 'p459508', host = 'COMPDBS300', database = 'schema459508')
 		cursor = cnx.cursor()
 		username = input("Please enter your username\n")
 		pword = input("Please enter your password\n")
@@ -53,10 +53,10 @@ def interface(username, pword, cursor, cnx): #I added a pass cursor and cnx so t
 		viewMyBid(userID, cursor)
 		return True
 	elif(choice == 2):
-		viewItems(userID, cursor, cnx)
+		viewItems(userID, cursor)
 		return True
 	elif(choice == 3):
-		viewPurchases(UserID, cursor, cnx)
+		viewPurchases(UserID, cursor) #Error global id userid not defined pass it
 		return True
 	elif(choice == 4):
 		searchWord(cursor, cnx)
@@ -71,7 +71,7 @@ def interface(username, pword, cursor, cnx): #I added a pass cursor and cnx so t
 		viewNumBids(cursor)
 		return True
 	elif(choice == 8):
-		viewPopItem(cursor, cnx)
+		viewPopItem(cursor, cnx)  #Some Kinda error gives a rand num and then 2211 but the most pop item is 2214
 		return True
 	elif (choice == 9):
 		newItemAuction(userID, cursor, cnx)
@@ -83,10 +83,10 @@ def interface(username, pword, cursor, cnx): #I added a pass cursor and cnx so t
 		viewHighBid(cursor)
 		return True
 	elif(choice == 12):
-		placeBid()
+		placeBid(userID, cursor, cnx)
 		return True
 	elif(choice == 13):
-		rateSeller()
+		rateSeller(userID, cursor, cnx)
 		return True
 	elif(choice == 14):
 		closeAuction()
@@ -106,7 +106,6 @@ def loginAttempt(username, password, cursor, cnx):
 	query = ("SELECT UserID from egccuser where username = %s and password = %s")
 	qdata = (username, password)
 	cursor.execute(query, qdata)
-	#print(cursor.UserID)
 	for(UserID) in cursor:
 		numrows += 1
 	if numrows == 1:
@@ -114,8 +113,8 @@ def loginAttempt(username, password, cursor, cnx):
 	else:
 		return False
 
-def getID(username, password, cursor, cnx): #Doesn't throw errors now at least
-	query = ("SELECT UserID from egccuser where username = %s and password = %s") #had to add single quotes.  I don't know why. xD
+def getID(username, password, cursor, cnx): 
+	query = ("SELECT UserID from egccuser where username = %s and password = %s") 
 	qdata = (username, password)
 	cursor.execute(query, qdata)
 	for (UserID) in cursor:
@@ -135,20 +134,20 @@ def changePass(username, cursor, cnx):
                 print("Update was not successful " + str(err))
 
 
-def viewItems(UserID, cursor, cnx): #the query SHOULD be working.  There's a problem with %s.  :/ If I run it with a number for SellerID, it works perfectly.
+def viewItems(UserID, cursor): 
         query = ("SELECT ItemID, title, description, startingBid, highestBid, endDate, SellerID, status, category from item where SellerID = %s") 
         cursor.execute(query, (UserID,))
         for (ItemID, title, description, startingBid, highestBid, endDate, SellerID, status, category) in cursor:
                 print(str(ItemID) + "\t" + str(title) + "\t"+str(description)+"\t"+str(startingBid)+"\t"+str(highestBid)+"\t"+str(endDate)+"\t"+str(SellerID)+"\t"+str(status)+"\t"+str(category) +"\n")
 
 
-def viewPurchases(UserID, cursor, cnx): #same problem.     oops... this was 3.  Sorry 
+def viewPurchases(UserID, cursor): #It says UserID isn't defined and that it needs to be passed.  Obviously it's being passed.
         query = ("SELECT title, description, price, category, dateSold, dateShipped from (select * from Purchase natural join item) BuyerInfo where BuyerID = %s")
-        cursor.execute(query,(UserID,))
+        cursor.execute(query, (UserID,))
         for (title, description, price, category, dateSold, dateShipped) in cursor:
                 print(str(title)+"\t"+str(description)+"\t"+str(price)+"\t"+str(category)+"\t"+str(dateSold)+"\t"+str(dateShipped))
 
-def searchWord(cursor, cnx): #Doesn't do the keyword search correctly.  Brings up the same 3 things no matter what??
+def searchWord(cursor, cnx): 
         print ("What keyword do you want to search for?")
         qdata = input()
         qdata = '%' + qdata + '%'
@@ -158,7 +157,7 @@ def searchWord(cursor, cnx): #Doesn't do the keyword search correctly.  Brings u
                 print(str(ItemID) + "\t" + str(title) + "\t"+str(description)+"\t"+str(startingBid)+"\t"+str(highestBid)+"\t"+str(endDate)+"\t"+str(SellerID)+"\t"+str(status)+"\t"+str(category))
 
 
-def viewSellerRating(cursor, cnx): #same problem
+def viewSellerRating(cursor, cnx): 
         print ("What is an Item ID of the seller?")
         qdata = input()
         query = ("select AVG(rating) from sellerRating where sellerID = (Select sellerID from item where itemID = %s) group by sellerID")
@@ -173,7 +172,7 @@ def viewPopItem(cursor, cnx): #Need to fix the SQL and possibly the output (but 
         for (item, itemid) in cursor:
                 print(str(item)+"\t"+str(itemid))
 
-def shipItem(cursor, cnx): #same problem
+def shipItem(cursor, cnx): 
         print("What is the Item ID of the item you have shipped?")
         qdata = input()
         try:
@@ -183,12 +182,13 @@ def shipItem(cursor, cnx): #same problem
                 query = ("update purchase set dateShipped = date(sysdate()) where itemid = %s")
                 cursor.execute(query,(qdata,))
                 cnx.commit()
+                print("Item status changed to shipped successfully!")
         except mysql.connector.Error as err:
                 print("Update was not successful " + str(err))
 
 
 
-def 	viewMyBid(UserID, cursor):
+def viewMyBid(UserID, cursor):
 		query = ("Select distinct ItemID, title, description, startingBid, highestBid, endDate, SellerID, status, category from item natural join(select itemID from bid where BuyerID = %s)as temp")
 		cursor.execute(query, (UserID,))
 		for (ItemID, title, description, startingBid, highestBid, endDate, SellerID, status, category) in cursor:
@@ -239,5 +239,33 @@ def viewHighBid(cursor):
 	except:
 		print("Invalid item ID")
 		
+def placeBid(userID, cursor, cnx):
+        print("What is the Item ID of the item you want to bid on?")
+        itemID = input()
+        print("How much would you like to bid?")
+        amount = input()
+        query = ("insert into bid values( %s, %s, date(sysdate()), time(sysdate()), %s)")
+        qdata = (userID, itemID, amount)
+        try:
+                cursor.execute(query,qdata)
+                cnx.commit()
+                print("You have bid successfully!")
+        except mysql.connector.Error as err:
+                print("Bid was not successful " + str(err))        
+
+def rateSeller(userID, cursor, cnx): #I think this works.  It makes sense for it to be limited so that the buyer can only rate the seller once we need time added for flexibility
+        print("What is the seller ID?")
+        seller = input()
+        print("What rating do you want to give the seller?")
+        rating = input()
+        query = ("insert into sellerRating values ( %s, %s, %s, null, date(sysdate()))")
+        qdata = (seller, userID, int(rating))
+        try:
+                cursor.execute(query, qdata)
+                cnx.commit()
+                print("Rating submitted successfully!")
+        except mysql.connector.Error as err:
+                print("Rating was not successful " + str(err))        
+
 	
 main()
