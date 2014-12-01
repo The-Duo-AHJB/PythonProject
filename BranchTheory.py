@@ -1,4 +1,5 @@
 import mysql.connector
+import datetime
 
 
 def main():
@@ -24,6 +25,7 @@ def main():
 			
 
 def interface(username, pword, cursor, cnx): #I added a pass cursor and cnx so the functions can access them. It complained about cursor not being a global variable.
+	userID = getID(username, pword, cursor, cnx)
 	print("0 : Change my Password")
 	print("1 : View Items I bid on")
 	print("2 : View my items")
@@ -45,40 +47,57 @@ def interface(username, pword, cursor, cnx): #I added a pass cursor and cnx so t
 	choice = int(choice)
 	if(choice == 0):
 		changePass(username, cursor, cnx)
+		return True
 	elif(choice == 1):
 		viewMyBid()
+		return True
 	elif(choice == 2):
-		viewItems(username, cursor, cnx)
+		viewItems(userID, cursor, cnx)
+		return True
 	elif(choice == 3):
-		viewPurchases(username, cursor, cnx)
+		viewPurchases(UserID, cursor, cnx)
+		return True
 	elif(choice == 4):
 		searchWord(cursor, cnx)
+		return True
 	elif(choice == 5):
 		searchCata()
+		return True
 	elif(choice == 6):
 		viewSellerRating(cursor, cnx)
+		return True
 	elif(choice == 7):
 		viewNumBids()
+		return True
 	elif(choice == 8):
 		viewPopItem(cursor, cnx)
+		return True
 	elif (choice == 9):
 		newItemAuction()
+		return True
 	elif(choice == 10):
 		shipItem(cursor, cnx)
+		return True
 	elif(choice == 11):
 		viewHighBid()
+		return True
 	elif(choice == 12):
 		placeBid()
+		return True
 	elif(choice == 13):
 		rateSeller()
+		return True
 	elif(choice == 14):
 		closeAuction()
+		return True
 	elif(choice == 15):
 		viewTopSellers()
+		return True
 	elif(choice == 16):
 		return False
 	else:
 		print("Invalid entry")
+		return True
 
 
 def loginAttempt(username, password, cursor, cnx):
@@ -94,12 +113,12 @@ def loginAttempt(username, password, cursor, cnx):
 	else:
 		return False
 
-def getID(username, cursor, cnx): #Doesn't throw errors now at least
-	query = ("SELECT UserID from egccuser where username = '%s'") #had to add single quotes.  I don't know why. xD
-	qdata = (username)
-	cursor.execute(query,qdata)
+def getID(username, password, cursor, cnx): #Doesn't throw errors now at least
+	query = ("SELECT UserID from egccuser where username = %s and password = %s") #had to add single quotes.  I don't know why. xD
+	qdata = (username, password)
+	cursor.execute(query, qdata)
 	for (UserID) in cursor:
-		return UserID
+		return int(UserID[0])
 		
 def changePass(username, cursor, cnx):
         print ("What do you want to change your password to?")
@@ -115,26 +134,25 @@ def changePass(username, cursor, cnx):
                 print("Update was not successful " + str(err))
 
 
-def viewItems(username, cursor, cnx): #the query SHOULD be working.  There's a problem with %s.  :/ If I run it with a number for SellerID, it works perfectly.
-        qdata = getID(username, cursor, cnx)
+def viewItems(UserID, cursor, cnx): #the query SHOULD be working.  There's a problem with %s.  :/ If I run it with a number for SellerID, it works perfectly.
         query = ("SELECT ItemID, title, description, startingBid, highestBid, endDate, SellerID, status, category from item where SellerID = %s") 
-        cursor.execute(query,qdata)
+        cursor.execute(query, (UserID,))
         for (ItemID, title, description, startingBid, highestBid, endDate, SellerID, status, category) in cursor:
-                print(str(ItemID) + "\t" + str(title) + "\t"+str(description)+"\t"+str(startingBid)+"\t"+str(highestBid)+"\t"+str(endDate)+"\t"+str(SellerID)+"\t"+str(status)+"\t"+str(category))
+                print(str(ItemID) + "\t" + str(title) + "\t"+str(description)+"\t"+str(startingBid)+"\t"+str(highestBid)+"\t"+str(endDate)+"\t"+str(SellerID)+"\t"+str(status)+"\t"+str(category) +"\n")
 
 
-def viewPurchases(username, cursor, cnx): #same problem.     oops... this was 3.  Sorry 
-        qdata = getID(username, cursor, cnx)
+def viewPurchases(UserID, cursor, cnx): #same problem.     oops... this was 3.  Sorry 
         query = ("SELECT title, description, price, category, dateSold, dateShipped from (select * from Purchase natural join item) BuyerInfo where BuyerID = %s")
-        cursor.execute(query,qdata)
+        cursor.execute(query,(UserID,))
         for (title, description, price, category, dateSold, dateShipped) in cursor:
                 print(str(title)+"\t"+str(description)+"\t"+str(price)+"\t"+str(category)+"\t"+str(dateSold)+"\t"+str(dateShipped))
 
 def searchWord(cursor, cnx): #Doesn't do the keyword search correctly.  Brings up the same 3 things no matter what??
         print ("What keyword do you want to search for?")
         qdata = input()
-        query = ("select ItemID, title, description, startingBid, highestBid, endDate, SellerID, status, category from item where description like '%%s%'")
-        cursor.execute(query,qdata)
+        qdata = '%' + qdata + '%'
+        query = ("SELECT ItemID, title, description, startingBid, highestBid, endDate, SellerID, status, category from item where description like %s")
+        cursor.execute(query,(qdata,))
         for (ItemID, title, description, startingBid, highestBid, endDate, SellerID, status, category) in cursor:
                 print(str(ItemID) + "\t" + str(title) + "\t"+str(description)+"\t"+str(startingBid)+"\t"+str(highestBid)+"\t"+str(endDate)+"\t"+str(SellerID)+"\t"+str(status)+"\t"+str(category))
 
@@ -143,9 +161,9 @@ def viewSellerRating(cursor, cnx): #same problem
         print ("What is an Item ID of the seller?")
         qdata = input()
         query = ("select AVG(rating) from sellerRating where sellerID = (Select sellerID from item where itemID = %s) group by sellerID")
-        cursor.execute(query,qdata)
+        cursor.execute(query,(qdata,))
         for rating in cursor:
-               print(str(rating))
+               print(str(rating[0]))
 
 
 def viewPopItem(cursor, cnx): #Need to fix the SQL and possibly the output (but otherwise prints fine)
@@ -159,10 +177,10 @@ def shipItem(cursor, cnx): #same problem
         qdata = input()
         try:
                 query = ("update item set status = 'shipped' where itemid = %s")
-                cursor.execute(query,qdata)
+                cursor.execute(query,(qdata,))
                 cnx.commit()
                 query = ("update purchase set dateShipped = date(sysdate()) where itemid = %s")
-                cursor.execute(query,qdata)
+                cursor.execute(query,(qdata,))
                 cnx.commit()
         except mysql.connector.Error as err:
                 print("Update was not successful " + str(err))
