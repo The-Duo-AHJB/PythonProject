@@ -9,11 +9,13 @@ def main():
 	while running== True:
 		cnx = mysql.connector.connect(user = 'u459508', password = 'p459508', host = 'COMPDBS300', database = 'schema459508')
 		cursor = cnx.cursor()
+		print("Welcome to eGCC")
 		username = input("Please enter your username\n")
 		pword = input("Please enter your password\n")
 		login = loginAttempt(username, pword, cursor, cnx)
 		if login == True:
 			print("Login Successful")
+			print("Welcome " + username + "!!!")
 			while(login == True):
 				login = interface(username, pword, cursor, cnx)
 		else:
@@ -27,6 +29,7 @@ def main():
 
 def interface(username, pword, cursor, cnx): #I added a pass cursor and cnx so the functions can access them. It complained about cursor not being a global variable.
 	userID = getID(username, pword, cursor, cnx)
+	print("")
 	print("0 : Change my Password")
 	print("1 : View Items I bid on")
 	print("2 : View my items")
@@ -56,16 +59,16 @@ def interface(username, pword, cursor, cnx): #I added a pass cursor and cnx so t
 		viewItems(userID, cursor)
 		return True
 	elif(choice == 3):
-		viewPurchases(userID, cursor) #Error global id userid not defined pass it
+		viewPurchases(userID, cursor)
 		return True
 	elif(choice == 4):
-		searchWord(cursor, cnx)
+		searchWord(cursor)
 		return True
 	elif(choice == 5):
 		searchCata(cursor)
 		return True
 	elif(choice == 6):
-		viewSellerRating(cursor, cnx)
+		viewSellerRating(cursor)
 		return True
 	elif(choice == 7):
 		viewNumBids(cursor)
@@ -92,7 +95,7 @@ def interface(username, pword, cursor, cnx): #I added a pass cursor and cnx so t
 		closeAuction(userID, cursor, cnx)
 		return True
 	elif(choice == 15):
-		viewTopSellers()
+		viewTopSellers(cursor)
 		return True
 	elif(choice == 16):
 		return False
@@ -147,7 +150,7 @@ def viewPurchases(UserID, cursor):
         for (title, description, price, category, dateSold, dateShipped) in cursor:
                 print(str(title)+"\t"+str(description)+"\t"+str(price)+"\t"+str(category)+"\t"+str(dateSold)+"\t"+str(dateShipped))
 
-def searchWord(cursor, cnx): 
+def searchWord(cursor): 
         print ("What keyword do you want to search for?")
         qdata = input()
         qdata = '%' + qdata + '%'
@@ -157,20 +160,21 @@ def searchWord(cursor, cnx):
                 print(str(ItemID) + "\t" + str(title) + "\t"+str(description)+"\t"+str(startingBid)+"\t"+str(highestBid)+"\t"+str(endDate)+"\t"+str(SellerID)+"\t"+str(status)+"\t"+str(category))
 
 
-def viewSellerRating(cursor, cnx): 
+def viewSellerRating(cursor): #we need an error handler if the itemID isn't valid.
         print ("What is an Item ID of the seller?")
         qdata = input()
         query = ("select AVG(rating) from sellerRating where sellerID = (Select sellerID from item where itemID = %s) group by sellerID")
         cursor.execute(query,(qdata,))
         for rating in cursor:
-               print(str(rating[0]))
+                print(str(rating[0]))
 
 
-def viewPopItem(cursor, cnx): #This needs to NOT print in tuple form.
+def viewPopItem(cursor, cnx): #This needs to NOT print in tuple form.  Needs error handler like SellerRating() EH.
         query = ("select itemID from(select count(*) as nbids, itemID from Bid group by (itemID)) bidsperitem where nbids >= all(select count(itemid) as nbids from bid group by itemid)")
         cursor.execute(query)
         for (itemID) in cursor:
                 print(itemID)
+                
 
 def shipItem(cursor, cnx): 
         print("What is the Item ID of the item you have shipped?")
@@ -281,6 +285,12 @@ def closeAuction(userID, cursor, cnx):
                 print("You have successfully closed the auction.")
         except mysql.connector.Error as err:
                 print("Closing the auction was unsuccessful " + str(err))
+
+def viewTopSellers(cursor):
+        query = ("select sellerid, avg(rating) as rating from sellerrating group by sellerid order by avg(rating) desc")
+        cursor.execute(query)
+        for (sellerid, rating) in cursor:
+                print(str(sellerid) + "\t" + str(rating) + "\t")
 
 	
 main()
