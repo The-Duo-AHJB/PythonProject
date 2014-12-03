@@ -27,7 +27,7 @@ def main():
 			
 			
 
-def interface(username, pword, cursor, cnx): #I added a pass cursor and cnx so the functions can access them. It complained about cursor not being a global variable.
+def interface(username, pword, cursor, cnx): 
 	userID = getID(username, pword, cursor, cnx)
 	print("")
 	print("0 : Change my Password")
@@ -160,7 +160,8 @@ def searchWord(cursor):
                 print(str(ItemID) + "\t" + str(title) + "\t"+str(description)+"\t"+str(startingBid)+"\t"+str(highestBid)+"\t"+str(endDate)+"\t"+str(SellerID)+"\t"+str(status)+"\t"+str(category))
 
 
-def viewSellerRating(cursor): #we need an error handler if the itemID isn't valid.
+def viewSellerRating(cursor):
+        numrows = 0
         print ("What is an Item ID of the seller?")
         qdata = input()
         query = ("select AVG(rating) from sellerRating where sellerID = (Select sellerID from item where itemID = %s) group by sellerID")
@@ -168,13 +169,19 @@ def viewSellerRating(cursor): #we need an error handler if the itemID isn't vali
         for rating in cursor:
                 print(str(rating[0]))
 
+        query = ("select itemID from item where itemID = %s")
+        cursor.execute(query,(qdata,))
+        for(itemID) in cursor:
+                numrows += 1
+        if numrows != 1:
+                print("The Item ID is incorrect.")
 
-def viewPopItem(cursor, cnx): #This needs to NOT print in tuple form.  Needs error handler like SellerRating() EH.
+
+def viewPopItem(cursor, cnx): #This needs to NOT print in tuple form. #needs the same ItemID check which can be taken from viewSellerRating
         query = ("select itemID from(select count(*) as nbids, itemID from Bid group by (itemID)) bidsperitem where nbids >= all(select count(itemid) as nbids from bid group by itemid)")
         cursor.execute(query)
         for (itemID) in cursor:
-                print(itemID)
-                
+                print(itemID)      
 
 def shipItem(cursor, cnx): 
         print("What is the Item ID of the item you have shipped?")
@@ -225,7 +232,7 @@ def newItemAuction(userID, cursor, cnx):
 	eD = input("What is the end date? please enter in the form YYYYMMDD.\n")
 	now = time.strftime("%Y%m%d")
 	if int(eD) < int(now):
-		print("You can now have an end date before the current date")
+		print("You cannot have an end date before the current date")
 		return
 	cate = input("Enter the category for your item\n")
 	qdata = (title, sBid, eD, cate, userID, HighID)
@@ -233,7 +240,7 @@ def newItemAuction(userID, cursor, cnx):
 	cnx.commit()
 	print("Item listed successfully!")
 
-def viewHighBid(cursor):
+def viewHighBid(cursor): #needs the error handle like above
 	query = ("select max(currentbid) num from bid where itemid = %s group by itemid")
 	itemID = input("Enter the id of the item for which you wish to know the highest current bid\n")
 	try:
