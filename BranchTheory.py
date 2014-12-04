@@ -263,8 +263,25 @@ def viewHighBid(cursor):
 def placeBid(userID, cursor, cnx): #needs error message if status isn't open OR if the bid isn't higher than highest bid
         print("What is the Item ID of the item you want to bid on?")
         itemID = input()
+		query = ("select itemid from bid where itemid = %s")
+		count = 0
+		cursor.execute(query, (itemID,))
+		for itemid in cursor:
+			count += 1
+		if count == 0:
+			print("Invalid item ID")
+			return
+
         print("How much would you like to bid?")
         amount = input()
+		query = ("Select max(bid) num from item where itemID = %s group by itemID")
+		cursor.execute(query, (itemID,))
+		highBid = 0
+		for num in cursor:
+			highBid = num[0]
+		if amount < highBid
+			print("You can not enter a bid lower then the highest")
+			return
         query = ("insert into bid values( %s, %s, date(sysdate()), time(sysdate()), %s)")
         qdata = (userID, itemID, amount)
         try:
@@ -279,6 +296,14 @@ def placeBid(userID, cursor, cnx): #needs error message if status isn't open OR 
 def rateSeller(userID, cursor, cnx): #needs error message if sellerID is not valid ID for a seller
         print("What is the seller ID?")
         seller = input()
+		count = 0
+		query = ("Select sellerID from item where sellerID = %s")
+		cursor.execute(query, (seller,))
+		for sellerID in cursor:
+			count += 1
+		if cursor == 0:
+			print("Seller Not Found")
+			return
         print("What rating do you want to give the seller?")
         rating = input()
         query = ("insert into sellerRating values ( %s, %s, %s, null, date(sysdate()))")
