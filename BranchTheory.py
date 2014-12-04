@@ -80,7 +80,7 @@ def interface(username, pword, cursor, cnx):
 		newItemAuction(userID, cursor, cnx)
 		return True
 	elif(choice == 10):
-		shipItem(cursor, cnx)
+		shipItem(userID, cursor, cnx)
 		return True
 	elif(choice == 11):
 		viewHighBid(cursor)
@@ -172,17 +172,24 @@ def viewSellerRating(cursor):
         validItemID(cursor, itemID)
 
 
-def viewPopItem(cursor, cnx): #needs to print ALL the attributes.
-        query = ("select itemID from(select count(*) as nbids, itemID from Bid group by (itemID)) bidsperitem where nbids >= all(select count(itemid) as nbids from bid group by itemid)")
+def viewPopItem(cursor, cnx):
+        query = ("SELECT ItemID, title, description, startingBid, highestBid, endDate, SellerID, status, category from item where ItemID = (select itemID from(select count(*) as nbids, itemID from Bid group by (itemID)) bidsperitem where nbids >= all(select count(itemid) as nbids from bid group by itemid))")
         cursor.execute(query)
-        for itemID in cursor:
-                print(itemID[0])      
+        for (ItemID, title, description, startingBid, highestBid, endDate, SellerID, status, category) in cursor:
+                print(str(ItemID) + "\t" + str(title) + "\t"+str(description)+"\t"+str(startingBid)+"\t"+str(highestBid)+"\t"+str(endDate)+"\t"+str(SellerID)+"\t"+str(status)+"\t"+str(category) +"\n")
+        
 
-def shipItem(cursor, cnx): #Needs errors.  Needs to check if the user is allowed to change it to shipped.
+def shipItem(userID, cursor, cnx):
         print("What is the Item ID of the item you have shipped?")
         itemID = input()
         try:
                 validItemID(cursor, itemID)
+                query = ("Select sellerID from item where itemID = %s")
+                cursor.execute(query, (itemID,))
+                for sellerID in cursor:
+                        if userID != sellerID[0]:
+                                print("You are not the seller of this item.")
+                                return
                 query = ("update item set status = 'shipped' where itemid = %s")
                 cursor.execute(query,(itemID,))
                 cnx.commit()
@@ -260,7 +267,7 @@ def viewHighBid(cursor):
 
 	validItemID(cursor, itemID)
 		
-def placeBid(userID, cursor, cnx): #needs error message if status isn't open OR if the bid isn't higher than highest bid
+def placeBid(userID, cursor, cnx):
         print("What is the Item ID of the item you want to bid on?")
         itemID = input()
         query = ("select itemid from bid where itemid = %s")
@@ -293,7 +300,7 @@ def placeBid(userID, cursor, cnx): #needs error message if status isn't open OR 
 
         validItemID(cursor, itemID)
 
-def rateSeller(userID, cursor, cnx): #needs error message if sellerID is not valid ID for a seller
+def rateSeller(userID, cursor, cnx):
         print("What is the seller ID?")
         seller = input()
         count = 0
@@ -315,18 +322,18 @@ def rateSeller(userID, cursor, cnx): #needs error message if sellerID is not val
         except mysql.connector.Error as err:
                 print("Rating was not successful " + str(err))
 
-def closeAuction(userID, cursor, cnx): #needs to error if item has already been sold
+def closeAuction(userID, cursor, cnx): 
         print("What is the Item ID of the auction you want to close?")
         itemID = input()
-		query = ("Select status from item where itemid = %s")
-		cursor.execute(query, (item,))
-		state = ""
-		for status in cursor:
-			state = status[0]
-		state.upper()
-		if state == "SOLD":
-			print("Item is already sold")
-			return
+        query = ("Select status from item where itemid = %s")
+        cursor.execute(query, (item,))
+        state = ""
+        for status in cursor:
+                state = status[0]
+        state.upper()
+        if state == "sold":
+                print("Item is already sold")
+                return
         query = ("insert into purchase values ((select buyerid from (select max(currentbid), buyerid from bid where itemid = %s group by itemid) FinalBidder), %s, (select highestbid from item where itemid = %s), date(sysdate()), null)")
         qdata = (itemID, itemID, itemID)
         try:
