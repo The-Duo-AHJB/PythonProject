@@ -318,6 +318,15 @@ def rateSeller(userID, cursor, cnx): #needs error message if sellerID is not val
 def closeAuction(userID, cursor, cnx): #needs to error if item has already been sold
         print("What is the Item ID of the auction you want to close?")
         itemID = input()
+		query = ("Select status from item where itemid = %s")
+		cursor.execute(query, (item,))
+		state = ""
+		for status in cursor:
+			state = status[0]
+		state.upper()
+		if state == "SOLD":
+			print("Item is already sold")
+			return
         query = ("insert into purchase values ((select buyerid from (select max(currentbid), buyerid from bid where itemid = %s group by itemid) FinalBidder), %s, (select highestbid from item where itemid = %s), date(sysdate()), null)")
         qdata = (itemID, itemID, itemID)
         try:
